@@ -1,0 +1,11 @@
+{
+  "auth": {
+    "o2pappbc838a0a": {
+      "service": "Cognito",
+      "serviceType": "imported",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-o2papp-dev-223743-authRole",
+      "UnauthRoleArn": "arn:aws:iam::937452085981:role/amplify-o2papp-dev-223743-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::937452085981:role/amplify-o2papp-dev-223743-authRole",
+      "Region": "eu-west-1",
+      "DeploymentBucketName": "amplify-o2papp-dev-223743-deployment",
+      "UnauthRoleName": "amplify-o2papp-dev-223743-unauthRole",
+      "StackName": "amplify-o2papp-dev-223743",
+      "StackId": "arn:aws:cloudformation:eu-west-1:937452085981:stack/amplify-o2papp-dev-223743/c09ff710-32ae-11ec-949c-02ece0966351",
+      "AmplifyAppId": "d3vfepv2i16l8p"
+    },
+    "categories": {
+      "auth": {
+        "o2pappbc838a0a": {
+          "userPoolId": "eu-west-1_0xeYT0mE5",
+          "userPoolName": "o2puserpool5C5BE647-4zvfTJbsK8EE",
+          "webClientId": "60vf40noeif8tenvchdipkmvai",
+          "nativeClientId": "747gokjo5s3u952kq00caj8bhv"
+        }
+      }
+    }
+  }
+}
