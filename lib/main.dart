@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify.dart';
+import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:flutter_login/flutter_login.dart';
 import 'chicken_lib.dart';
 import 'amplifyconfiguration.dart';
-
-// TODO: initialize amplify in the application
-// https://docs.amplify.aws/lib/project-setup/create-application/q/platform/flutter/#3-provision-the-backend-with-amplify-cli
-// https://ichi.pro/fr/applications-flutter-avec-aws-amplify-backend-partie-2-authentification-182936463882645//
-//https://dev.to/pandukanandara/authentication-for-flutter-with-aws-amplify-2lhp
-
 void main() {
   runApp(const MyApp());
 }
@@ -55,7 +50,7 @@ class _HomePageState extends State<HomePage> {
 
   _configureAmplify() async{
     AmplifyAuthCognito authPlugin = AmplifyAuthCognito();
-    await Amplify.addPlugins([authPlugin]);
+    await Amplify.addPlugins([authPlugin,AmplifyAPI()]);
     try{
       await Amplify.configure(amplifyconfig);
     } on AmplifyAlreadyConfiguredException {
@@ -88,7 +83,8 @@ class _HomePageState extends State<HomePage> {
       return [
           IconButton(
             onPressed: ()=>_confirmLogout(context), 
-            icon: const Icon(Icons.account_circle)
+            icon: const Icon(Icons.account_circle),
+            tooltip: _username,
             )
       ];
     }
@@ -103,7 +99,7 @@ class _HomePageState extends State<HomePage> {
     }
     else{
       return _isSignedIn ?
-          ChickenListWidget() : FlutterLogin(
+          const ChickenListWidget() : FlutterLogin(
                 onLogin: _authUser,
                 onSignup: _signupUser,
                 onResendCode: _resendCode,

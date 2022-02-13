@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:amplify_flutter/amplify.dart';
+import 'package:amplify_api/amplify_api.dart';
+import 'dart:convert';
 
 class Chicken{
 
@@ -8,12 +11,21 @@ class Chicken{
 
   Chicken(this.name,this.eggsCount);
 
+  factory Chicken.fromJson(Map<String,dynamic> data){
+    return Chicken(
+      data['name'] as String, 
+      data['eggsCount'] as int);
+  }
+
   void addEggs(){
     eggsCount++;
   }
 }
 
+
 class ChickenListWidget extends StatefulWidget{
+  const ChickenListWidget({Key? key}) : super(key: key);
+
 
   @override
   State<StatefulWidget> createState() => _ChickenHomeWidgetState();
@@ -38,6 +50,12 @@ class _ChickenHomeWidgetState extends State<ChickenListWidget>{
     setState(
             () => chickens.removeWhere((element) => element.name == name)
     );
+  }
+
+  @override
+  initState(){
+    super.initState();
+    _getAllChickens();
   }
 
   @override
@@ -84,6 +102,38 @@ class _ChickenHomeWidgetState extends State<ChickenListWidget>{
     );
   }
 
+  _getAllChickens() async {
+    String graphqlRequest =
+    '''query MyQuery {
+          getAll {
+            id
+            eggsCount
+            name
+          }
+        }''';
+    List<Chicken> list = List.empty();
+    try{
+      GraphQLOperation operation = Amplify.API.query(
+          request: GraphQLRequest<String>(
+            document: graphqlRequest,
+            apiName: "appsync-api_AMAZON_COGNITO_USER_POOLS"));        
+      var response = await operation.response;
+      Map<String,dynamic> value = jsonDecode(response.data); 
+      List<dynamic> getAllResponse = value['getAll'] as List<dynamic>;
+      
+      print("getAll graphql request succeed");
+      print(value["getAll"]);
+      
+      setState(() {
+        chickens = getAllResponse.map((data) => Chicken.fromJson(data)).toList();
+      });
+    }
+    catch(error){
+      print("getAll graphql request failed");
+      print(error);
+    }
+  
+  }
 }
 
 Widget chickenAddDialog(BuildContext context) {
