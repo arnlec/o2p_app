@@ -2,109 +2,85 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:amplify_flutter/amplify.dart';
 import 'package:amplify_api/amplify_api.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:convert';
 
-class Chicken{
-
+class Chicken {
+  String id;
   String name;
   int eggsCount;
 
-  Chicken(this.name,this.eggsCount);
+  Chicken(this.id, this.name, this.eggsCount);
 
-  factory Chicken.fromJson(Map<String,dynamic> data){
+  factory Chicken.fromJson(Map<String, dynamic> data) {
     return Chicken(
-      data['name'] as String, 
-      data['eggsCount'] as int);
+        data['id'] as String, data['name'] as String, data['eggsCount'] as int);
   }
 
-  void addEggs(){
+  void addEggs() {
     eggsCount++;
   }
 }
 
-
-class ChickenListWidget extends StatefulWidget{
+class ChickenListWidget extends StatefulWidget {
   const ChickenListWidget({Key? key}) : super(key: key);
-
 
   @override
   State<StatefulWidget> createState() => _ChickenHomeWidgetState();
-
 }
 
-class _ChickenHomeWidgetState extends State<ChickenListWidget>{
-
+class _ChickenHomeWidgetState extends State<ChickenListWidget> {
   List<Chicken> chickens = List.empty(growable: true);
 
-  void addChicken(Chicken? chicken){
-    setState(
-            () {
-          if (chicken != null){
-            chickens.add(chicken);
-          }
-        }
-    );
-  }
-
-  void delChicken(String name){
-    setState(
-            () => chickens.removeWhere((element) => element.name == name)
-    );
+  void delChicken(String name) {
+    setState(() => chickens.removeWhere((element) => element.name == name));
   }
 
   @override
-  initState(){
+  initState() {
     super.initState();
     _getAllChickens();
   }
 
   @override
   Widget build(BuildContext context) {
-    return
-      Scaffold(
-        body: ListView(
-          children: chickens
-          .map((e) => chickenListItem(context, e))
-          .toList()),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => showDialog(
-              context: context,
-              builder: (context) => chickenAddDialog(context)
-          ).then((value) => addChicken(value)),
-          tooltip: 'New chicken',
-          child: const Icon(Icons.add),
-        ),
-      );
-  }
-
-  Widget chickenListItem(BuildContext context, Chicken chicken){
-    return Card(
-        child: ListTile(
-          title: Text(chicken.name),
-          onLongPress: () => showDialog(
-              context: context,
-              builder: (context) =>  AlertDialog(
-                  title:  Text("Delete chicken ${chicken.name} ?"),
-                  actions:[
-                    ElevatedButton(
-                        onPressed: () => Navigator.pop(context,true),
-                        child: const Text('Yes')
-                    ),
-                    ElevatedButton(
-                        onPressed: () => Navigator.pop(context,false),
-                        child: const Text('No')
-                    )
-                  ]
-              )
-          )
-              .then((value) {if (value) delChicken(chicken.name);}),
-        )
+    return Scaffold(
+      body: ListView(
+          children: chickens.map((e) => chickenListItem(context, e)).toList()),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => showDialog(
+                context: context,
+                builder: (context) => chickenAddDialog(context))
+            .then((value) => _addChicken(value)),
+        tooltip: 'New chicken',
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
+  Widget chickenListItem(BuildContext context, Chicken chicken) {
+    return Card(
+        child: ListTile(
+      title: Text(chicken.name),
+      onLongPress: () => showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+                  title: Text("Delete chicken ${chicken.name} ?"),
+                  actions: [
+                    ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Yes')),
+                    ElevatedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('No'))
+                  ])).then((value) {
+        if (value) delChicken(chicken.name);
+      }),
+    ));
+  }
+
   _getAllChickens() async {
-    String graphqlRequest =
-    '''query MyQuery {
+    String graphqlRequest = '''query MyQuery {
           getAll {
             id
             eggsCount
@@ -112,27 +88,61 @@ class _ChickenHomeWidgetState extends State<ChickenListWidget>{
           }
         }''';
     List<Chicken> list = List.empty();
-    try{
+    try {
       GraphQLOperation operation = Amplify.API.query(
           request: GraphQLRequest<String>(
-            document: graphqlRequest,
-            apiName: "appsync-api_AMAZON_COGNITO_USER_POOLS"));        
+              document: graphqlRequest,
+              apiName: "appsync-api_AMAZON_COGNITO_USER_POOLS"));
       var response = await operation.response;
-      Map<String,dynamic> value = jsonDecode(response.data); 
+      Map<String, dynamic> value = jsonDecode(response.data);
       List<dynamic> getAllResponse = value['getAll'] as List<dynamic>;
-      
-      print("getAll graphql request succeed");
-      print(value["getAll"]);
-      
+
       setState(() {
-        chickens = getAllResponse.map((data) => Chicken.fromJson(data)).toList();
+        chickens =
+            getAllResponse.map((data) => Chicken.fromJson(data)).toList();
       });
-    }
-    catch(error){
+    } catch (error) {
       print("getAll graphql request failed");
       print(error);
     }
-  
+  }
+
+  void _addChicken(Chicken? chicken) async {
+    String graphQLDocument = '''
+    mutation chicken(\$id:ID!,\$eggsCount:Int,\$name:String!) {
+      create(chicken: {
+        id: \$id,
+        eggsCount:\$eggsCount,
+        name:\$name
+      }) 
+      {
+        id
+        eggsCount
+        name
+      }
+    }''';
+    if (chicken != null) {
+      try {
+        var operation = Amplify.API.mutate(
+            request: GraphQLRequest<String>(
+          document: graphQLDocument,
+          apiName: "appsync-api_AMAZON_COGNITO_USER_POOLS",
+          variables: {
+            'id': chicken.id,
+            'name': chicken.name,
+            'eggsCount': chicken.eggsCount,
+          },
+        ));
+        var response = await operation.response;
+        print(response.data);
+        if (response.errors.isEmpty) {
+          setState(() => chickens.add(chicken));
+        }
+      } catch (error) {
+        print("create graphql request failed");
+        print(error);
+      }
+    }
   }
 }
 
@@ -151,8 +161,8 @@ Widget chickenAddDialog(BuildContext context) {
                   const Text('Name'),
                   TextFormField(
                     controller: controller,
-                    validator: (value){
-                      if (value == null || value.isEmpty){
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
                         return "Enter some text";
                       }
                       return null;
@@ -165,8 +175,8 @@ Widget chickenAddDialog(BuildContext context) {
               ElevatedButton(
                 child: const Text('Add'),
                 onPressed: () {
-                  if(formKey.currentState!.validate()){
-                    Chicken chicken = Chicken(controller.text,0);
+                  if (formKey.currentState!.validate()) {
+                    Chicken chicken = Chicken(Uuid().v1(), controller.text, 0);
                     Navigator.pop(context, chicken);
                   }
                 },
@@ -178,6 +188,3 @@ Widget chickenAddDialog(BuildContext context) {
             ],
           ));
 }
-
-
-

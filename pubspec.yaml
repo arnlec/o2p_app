@@ -41,6 +41,8 @@ dependencies:
   flutter_login: '^3.0.0'
   rflutter_alert: '^1.0.3'
 
+  uuid: '3.0.6'
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
